@@ -1,44 +1,32 @@
-import pytest
-from file_share_guard import FileMetadata, upload_file, download_file, get_encryption_key
-import os
+from file_share_guard import FileShareGuard
 
-def test_upload_file():
-    file_data = b'Hello, World!'
-    filename = 'example.txt'
-    metadata = upload_file(file_data, filename)
-    assert metadata.filename == filename
-    assert metadata.encryption_key
-    os.remove(f'{filename}.enc')
-    os.remove(f'{filename}.meta')
+def test_encrypt_file():
+    file_share_guard = FileShareGuard("test_key")
+    file_data = "Hello, World!"
+    encrypted_data = file_share_guard.encrypt_file(file_data)
+    assert encrypted_data != file_data
 
-def test_download_file():
-    file_data = b'Hello, World!'
-    filename = 'example.txt'
-    upload_file(file_data, filename)
-    downloaded_data = download_file(filename)
-    assert downloaded_data == file_data
-    os.remove(f'{filename}.enc')
-    os.remove(f'{filename}.meta')
+def test_decrypt_file():
+    file_share_guard = FileShareGuard("test_key")
+    file_data = "Hello, World!"
+    encrypted_data = file_share_guard.encrypt_file(file_data)
+    decrypted_data = file_share_guard.decrypt_file(encrypted_data)
+    assert decrypted_data == file_data
 
-def test_get_encryption_key():
-    file_data = b'Hello, World!'
-    filename = 'example.txt'
-    metadata = upload_file(file_data, filename)
-    encryption_key = get_encryption_key(filename)
-    assert encryption_key == metadata.encryption_key
-    os.remove(f'{filename}.enc')
-    os.remove(f'{filename}.meta')
+def test_manage_encryption_keys():
+    file_share_guard = FileShareGuard("test_key")
+    new_key = "new_test_key"
+    updated_key = file_share_guard.manage_encryption_keys(new_key)
+    assert updated_key == new_key
 
-def test_upload_file_edge_case():
-    file_data = b''
-    filename = 'example.txt'
-    metadata = upload_file(file_data, filename)
-    assert metadata.filename == filename
-    assert metadata.encryption_key
-    os.remove(f'{filename}.enc')
-    os.remove(f'{filename}.meta')
+def test_encrypt_file_edge_case():
+    file_share_guard = FileShareGuard("test_key")
+    file_data = ""
+    encrypted_data = file_share_guard.encrypt_file(file_data)
+    assert encrypted_data == ""
 
-def test_download_file_edge_case():
-    filename = 'non_existent_file.txt'
-    downloaded_data = download_file(filename)
-    assert downloaded_data is None
+def test_decrypt_file_edge_case():
+    file_share_guard = FileShareGuard("test_key")
+    encrypted_data = ""
+    decrypted_data = file_share_guard.decrypt_file(encrypted_data)
+    assert decrypted_data == ""

@@ -5,7 +5,7 @@ build-backend = "poetry.masonry.api"
 [tool.poetry]
 name = "file-share-guard"
 version = "1.0.0"
-description = "Secure file sharing"
+description = "A tool for secure file sharing"
 
 [tool.poetry.dependencies]
 python = "^3.8"
