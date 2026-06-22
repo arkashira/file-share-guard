@@ -1,32 +1,27 @@
+import datetime
 from file_share_guard import FileShareGuard
 
-def test_encrypt_file():
-    file_share_guard = FileShareGuard("test_key")
-    file_data = "Hello, World!"
-    encrypted_data = file_share_guard.encrypt_file(file_data)
-    assert encrypted_data != file_data
+def test_set_expiration_date():
+    guard = FileShareGuard()
+    guard.set_expiration_date("test_file", datetime.date.today() + datetime.timedelta(days=1))
+    assert guard.get_expiration_date("test_file") == datetime.date.today() + datetime.timedelta(days=1)
 
-def test_decrypt_file():
-    file_share_guard = FileShareGuard("test_key")
-    file_data = "Hello, World!"
-    encrypted_data = file_share_guard.encrypt_file(file_data)
-    decrypted_data = file_share_guard.decrypt_file(encrypted_data)
-    assert decrypted_data == file_data
+def test_is_expired():
+    guard = FileShareGuard()
+    guard.set_expiration_date("test_file", datetime.date.today() - datetime.timedelta(days=1))
+    assert guard.is_expired("test_file")
 
-def test_manage_encryption_keys():
-    file_share_guard = FileShareGuard("test_key")
-    new_key = "new_test_key"
-    updated_key = file_share_guard.manage_encryption_keys(new_key)
-    assert updated_key == new_key
+def test_notify_expiration():
+    guard = FileShareGuard()
+    guard.set_expiration_date("test_file", datetime.date.today() + datetime.timedelta(days=1))
+    guard.notify_expiration("test_file")
 
-def test_encrypt_file_edge_case():
-    file_share_guard = FileShareGuard("test_key")
-    file_data = ""
-    encrypted_data = file_share_guard.encrypt_file(file_data)
-    assert encrypted_data == ""
+def test_expire_file_share():
+    guard = FileShareGuard()
+    guard.set_expiration_date("test_file", datetime.date.today() - datetime.timedelta(days=1))
+    guard.expire_file_share("test_file")
+    assert "test_file" not in guard.file_shares
 
-def test_decrypt_file_edge_case():
-    file_share_guard = FileShareGuard("test_key")
-    encrypted_data = ""
-    decrypted_data = file_share_guard.decrypt_file(encrypted_data)
-    assert decrypted_data == ""
+def test_get_expiration_date_non_existent_file():
+    guard = FileShareGuard()
+    assert guard.get_expiration_date("non_existent_file") is None

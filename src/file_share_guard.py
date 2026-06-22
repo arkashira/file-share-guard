@@ -1,49 +1,38 @@
-import argparse
+import datetime
 import json
 from dataclasses import dataclass
-from typing import Optional
+from typing import Dict, Optional
 
 @dataclass
+class FileShare:
+    file_name: str
+    expiration_date: datetime.date
+
 class FileShareGuard:
-    encryption_key: str
+    def __init__(self):
+        self.file_shares: Dict[str, FileShare] = {}
 
-    def encrypt_file(self, file_data: str) -> str:
-        encrypted_data = ""
-        for i, char in enumerate(file_data):
-            encrypted_data += chr((ord(char) + ord(self.encryption_key[i % len(self.encryption_key)])) % 256)
-        return encrypted_data
+    def set_expiration_date(self, file_name: str, expiration_date: datetime.date):
+        self.file_shares[file_name] = FileShare(file_name, expiration_date)
 
-    def decrypt_file(self, encrypted_data: str) -> str:
-        decrypted_data = ""
-        for i, char in enumerate(encrypted_data):
-            decrypted_data += chr((ord(char) - ord(self.encryption_key[i % len(self.encryption_key)])) % 256)
-        return decrypted_data
+    def get_expiration_date(self, file_name: str) -> Optional[datetime.date]:
+        file_share = self.file_shares.get(file_name)
+        if file_share is None:
+            return None
+        return file_share.expiration_date
 
-    def manage_encryption_keys(self, new_key: Optional[str] = None) -> str:
-        if new_key:
-            self.encryption_key = new_key
-        return self.encryption_key
+    def is_expired(self, file_name: str) -> bool:
+        if file_name not in self.file_shares:
+            return True
+        return self.file_shares[file_name].expiration_date < datetime.date.today()
 
-def main():
-    parser = argparse.ArgumentParser(description="File Share Guard")
-    parser.add_argument("--encrypt", help="Encrypt a file")
-    parser.add_argument("--decrypt", help="Decrypt a file")
-    parser.add_argument("--key", help="Set a new encryption key")
-    args = parser.parse_args()
+    def notify_expiration(self, file_name: str):
+        if file_name in self.file_shares:
+            if self.file_shares[file_name].expiration_date - datetime.date.today() == datetime.timedelta(days=1):
+                print(f"File share {file_name} is about to expire")
 
-    file_share_guard = FileShareGuard("default_key")
-
-    if args.encrypt:
-        encrypted_data = file_share_guard.encrypt_file(args.encrypt)
-        print(encrypted_data)
-
-    elif args.decrypt:
-        decrypted_data = file_share_guard.decrypt_file(args.decrypt)
-        print(decrypted_data)
-
-    elif args.key:
-        new_key = file_share_guard.manage_encryption_keys(args.key)
-        print(new_key)
-
-if __name__ == "__main__":
-    main()
+    def expire_file_share(self, file_name: str):
+        if self.is_expired(file_name):
+            if file_name in self.file_shares:
+                del self.file_shares[file_name]
+                print(f"File share {file_name} has expired and been removed")
