@@ -1,38 +1,31 @@
-import datetime
+import hashlib
 import json
 from dataclasses import dataclass
-from typing import Dict, Optional
+from typing import Optional
 
 @dataclass
-class FileShare:
+class Share:
     file_name: str
-    expiration_date: datetime.date
+    password: Optional[str] = None
 
 class FileShareGuard:
     def __init__(self):
-        self.file_shares: Dict[str, FileShare] = {}
+        self.shares = {}
 
-    def set_expiration_date(self, file_name: str, expiration_date: datetime.date):
-        self.file_shares[file_name] = FileShare(file_name, expiration_date)
+    def create_share(self, file_name: str, password: Optional[str] = None) -> str:
+        share_id = hashlib.sha256(f"{file_name}{password}".encode()).hexdigest()
+        self.shares[share_id] = Share(file_name, password)
+        return share_id
 
-    def get_expiration_date(self, file_name: str) -> Optional[datetime.date]:
-        file_share = self.file_shares.get(file_name)
-        if file_share is None:
-            return None
-        return file_share.expiration_date
-
-    def is_expired(self, file_name: str) -> bool:
-        if file_name not in self.file_shares:
+    def authenticate(self, share_id: str, password: str) -> bool:
+        if share_id not in self.shares:
+            return False
+        share = self.shares[share_id]
+        if share.password is None:
             return True
-        return self.file_shares[file_name].expiration_date < datetime.date.today()
+        return hashlib.sha256(password.encode()).hexdigest() == hashlib.sha256(share.password.encode()).hexdigest()
 
-    def notify_expiration(self, file_name: str):
-        if file_name in self.file_shares:
-            if self.file_shares[file_name].expiration_date - datetime.date.today() == datetime.timedelta(days=1):
-                print(f"File share {file_name} is about to expire")
-
-    def expire_file_share(self, file_name: str):
-        if self.is_expired(file_name):
-            if file_name in self.file_shares:
-                del self.file_shares[file_name]
-                print(f"File share {file_name} has expired and been removed")
+    def get_file_name(self, share_id: str, password: str) -> Optional[str]:
+        if self.authenticate(share_id, password):
+            return self.shares[share_id].file_name
+        return None
