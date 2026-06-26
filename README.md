@@ -1,13 +1,10 @@
 # File Share Guard
-
-A simple file share guard that allows you to create shares with optional password protection.
+A simple file sharing system that generates links with optional password protection and expiration time.
 
 ## Usage
-
-1. Create a share with `FileShareGuard.create_share(file_name, password=None)`.
-2. Authenticate with `FileShareGuard.authenticate(share_id, password)`.
-3. Get the file name with `FileShareGuard.get_file_name(share_id, password)`.
+1. Upload a file using the `upload_file` function.
+2. Generate a link using the `generate_link` function.
+3. View and copy the generated link using the `view_link` and `copy_link` functions.
 
 ## Testing
-
-Run the tests with `python -m pytest`.
+Run the tests using `pytest` to ensure the implementation is correct.

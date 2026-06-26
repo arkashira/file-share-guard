@@ -1,31 +1,50 @@
-import hashlib
+import argparse
+import dataclasses
 import json
-from dataclasses import dataclass
-from typing import Optional
+import os
+from datetime import datetime, timedelta
 
-@dataclass
-class Share:
+@dataclasses.dataclass
+class FileShareLink:
     file_name: str
-    password: Optional[str] = None
+    link: str
+    expiration_time: str
+    password: str = None
 
-class FileShareGuard:
-    def __init__(self):
-        self.shares = {}
+def parse_expiration_time(expiration_time: str) -> timedelta:
+    """Parse expiration time string into a timedelta object."""
+    if expiration_time.endswith('s'):
+        return timedelta(seconds=int(expiration_time[:-1]))
+    elif expiration_time.endswith('m'):
+        return timedelta(minutes=int(expiration_time[:-1]))
+    elif expiration_time.endswith('h'):
+        return timedelta(hours=int(expiration_time[:-1]))
+    elif expiration_time.endswith('d'):
+        return timedelta(days=int(expiration_time[:-1]))
+    else:
+        raise ValueError("Invalid expiration time format")
 
-    def create_share(self, file_name: str, password: Optional[str] = None) -> str:
-        share_id = hashlib.sha256(f"{file_name}{password}".encode()).hexdigest()
-        self.shares[share_id] = Share(file_name, password)
-        return share_id
+def generate_link(file_name: str, expiration_time: str, password: str = None) -> FileShareLink:
+    """Generate a link with optional password protection and expiration time."""
+    try:
+        parse_expiration_time(expiration_time)
+    except ValueError:
+        raise ValueError("Invalid expiration time format")
+    
+    link = f"{file_name}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+    if password:
+        link += f"?password={password}"
+    return FileShareLink(file_name, link, expiration_time, password)
 
-    def authenticate(self, share_id: str, password: str) -> bool:
-        if share_id not in self.shares:
-            return False
-        share = self.shares[share_id]
-        if share.password is None:
-            return True
-        return hashlib.sha256(password.encode()).hexdigest() == hashlib.sha256(share.password.encode()).hexdigest()
+def upload_file(file_path: str, expiration_time: str, password: str = None) -> FileShareLink:
+    """Upload a file and generate a link."""
+    file_name = os.path.basename(file_path)
+    return generate_link(file_name, expiration_time, password)
 
-    def get_file_name(self, share_id: str, password: str) -> Optional[str]:
-        if self.authenticate(share_id, password):
-            return self.shares[share_id].file_name
-        return None
+def view_link(link: FileShareLink) -> str:
+    """View and return the generated link."""
+    return link.link
+
+def copy_link(link: str) -> str:
+    """Copy and return the generated link."""
+    return link
